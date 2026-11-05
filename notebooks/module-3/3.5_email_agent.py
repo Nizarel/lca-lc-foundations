@@ -1,4 +1,6 @@
+import os
 from dotenv import load_dotenv
+from langchain_openai import AzureChatOpenAI
 from dataclasses import dataclass
 from langchain.agents import AgentState, create_agent
 from langchain.tools import tool, ToolRuntime
@@ -93,7 +95,7 @@ def dynamic_prompt_func(request: ModelRequest) -> str:
 
 
 agent = create_agent(
-        "gpt-5-nano",
+        AzureChatOpenAI(azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT"]),
         tools=[authenticate, check_inbox, send_email],
         state_schema=AuthenticatedState,
         context_schema=EmailContext,

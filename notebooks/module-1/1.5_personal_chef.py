@@ -1,4 +1,6 @@
+import os
 from dotenv import load_dotenv
+from langchain_openai import AzureChatOpenAI
 
 load_dotenv()
 
@@ -28,7 +30,7 @@ Return recipe suggestions and eventually the recipe instructions to the user, if
 from langchain.agents import create_agent
 
 agent = create_agent(
-    model="gpt-5-nano",
+    model=AzureChatOpenAI(azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT"]),
     tools=[web_search],
     system_prompt=system_prompt
 )

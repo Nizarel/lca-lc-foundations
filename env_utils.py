@@ -347,9 +347,13 @@ def doublecheck_env(file_path: str):
             # Use the new summarize_value with key, value, and example_value
             print(f"{key}={summarize_value(key, current, example_val)}")
 
-            # Check if this required key still has the example/placeholder value
+            # Endpoint, API version and deployment examples are usable defaults.
             if key in required_keys:
-                if current == example_val:
+                if not current:
+                    issues.append(f"  ⚠️  {key} is required but empty")
+                elif current == example_val and (
+                    key.endswith("API_KEY") or example_val.startswith("your_")
+                ):
                     issues.append(f"  ⚠️  {key} still has the example/placeholder value")
         else:
             print(f"{key}=<not set>")

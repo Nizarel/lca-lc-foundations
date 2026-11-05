@@ -35,18 +35,25 @@ cp example.env .env
 
 Edit the .env file to include the keys below for [Models](#model-providers) and optionally [LangSmith](#getting-started-with-langsmith)
 
-- Get an OpenAI API Key [here](https://openai.com/index/openai-api/).  
-- Optional for Module1/Lesson1, get an Anthropic API Key [here](https://console.anthropic.com) and a Google API Key [here](https://ai.google.dev/gemini-api/docs/quickstart).
+- Get your Azure OpenAI resource key and deployment name from [Microsoft Foundry](https://ai.azure.com/).
+- Optional provider examples use an Anthropic API Key [here](https://console.anthropic.com) and a Google API Key [here](https://ai.google.dev/gemini-api/docs/quickstart). The dynamic-model lesson also uses Anthropic.
 - Optional, Create a [LangSmith](https://smith.langchain.com/) account and API Key.  
 
 ```bash
 # Manual installs for checking: uv
 
 # Required
-OPENAI_API_KEY='your_openai_api_key_here'
+AZURE_OPENAI_API_KEY='your_azure_openai_api_key_here'
+AZURE_OPENAI_ENDPOINT='https://manadry.cognitiveservices.azure.com/'
+OPENAI_API_VERSION='2024-12-01-preview'
+AZURE_OPENAI_DEPLOYMENT='gpt-6.1-sol'
 TAVILY_API_KEY='your_tavily_api_key_here'
 
-# optional, only used in Module1, Lesson 1 once
+# Optional deployments for the bonus RAG and audio lessons
+# AZURE_OPENAI_EMBEDDING_DEPLOYMENT='your_text_embedding_3_large_deployment'
+# AZURE_OPENAI_AUDIO_DEPLOYMENT='your_audio_deployment'
+
+# Optional provider examples in Module 1 and dynamic models in Module 3
 ANTHROPIC_API_KEY='your_anthropic_api_key_here'
 GOOGLE_API_KEY='your_google_api_key_here'
 
@@ -106,6 +113,12 @@ python env_utils.py
 </details>
 
 [If the script flags issues, see this section below.](#setup-verification-issues)
+
+Offline configuration tests (no API keys or Azure requests required):
+
+```bash
+uv run python -m unittest discover -s tests
+```
 
 ### Run Notebooks [More Info](#development-environment)
 
@@ -268,7 +281,40 @@ pip install -r requirements.txt
 
 ### Model Providers
 
-If you don't have an OpenAI API key, you can sign up [here](https://openai.com/index/openai-api/). The course primarily uses gpt-5-nano which is very inexpensive.  If desired, you may also obtain additional API keys for [Anthropic](https://console.anthropic.com) or [Google](https://ai.google.dev/gemini-api/docs/quickstart).
+The OpenAI examples use **Azure OpenAI in Microsoft Foundry** through LangChain's `AzureChatOpenAI`, backed by the OpenAI SDK's `AzureOpenAI` client. Set `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, `OPENAI_API_VERSION`, and `AZURE_OPENAI_DEPLOYMENT` in `.env`. The configured endpoint is `https://manadry.cognitiveservices.azure.com/`, the API version is `2024-12-01-preview`, and the chat deployment is `gpt-6.1-sol`. Use your actual **deployment name**, which can differ from the underlying model name. A public OpenAI API key is not needed.
+
+`AzureChatOpenAI` reads the endpoint, key and API version from these environment variables automatically:
+
+```python
+import os
+from dotenv import load_dotenv
+from langchain_openai import AzureChatOpenAI
+
+load_dotenv()
+model = AzureChatOpenAI(
+    azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT"],
+)
+```
+
+For direct SDK calls, the equivalent configuration is:
+
+```python
+from openai import AzureOpenAI
+
+client = AzureOpenAI(
+    api_version=os.environ["OPENAI_API_VERSION"],
+    azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+    api_key=os.environ["AZURE_OPENAI_API_KEY"],
+)
+response = client.chat.completions.create(
+    model=os.environ["AZURE_OPENAI_DEPLOYMENT"],
+    messages=[{"role": "user", "content": "Hello!"}],
+)
+```
+
+The bonus RAG lesson additionally requires `AZURE_OPENAI_EMBEDDING_DEPLOYMENT`, pointing to a `text-embedding-3-large` deployment. The audio section of the multimodal lesson requires `AZURE_OPENAI_AUDIO_DEPLOYMENT`, pointing to an audio-capable chat deployment supported by your Azure resource and API version. Only run those sections after configuring the corresponding deployment. Image, tool-calling and structured-output examples likewise require a chat deployment supporting those capabilities.
+
+Anthropic and Google examples are unchanged. Obtain their own API keys from [Anthropic](https://console.anthropic.com) or [Google](https://ai.google.dev/gemini-api/docs/quickstart) to run those cells. In the foundational-model lesson, the provider examples reassign `model`; re-run the Azure initialization cell before the agent example to use Foundry. The dynamic-model lesson intentionally switches between the Foundry deployment and Anthropic.
 
 This course has been created using particular models and model providers.  You can use other providers, but you will need to update the API keys in the .env file and make some necessary code changes. LangChain supports many chat model providers. [More Info](https://docs.langchain.com/oss/python/integrations/providers/all_providers).
 
