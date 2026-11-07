@@ -32,7 +32,8 @@ az login --tenant 16b3c013-d300-468d-ac64-7eda0820b6d3
 az account set --subscription da9dea7f-1fc8-44de-93da-ce5c58314cdb
 $publicKey = (Get-Content -Raw "$HOME/.ssh/id_ed25519.pub").Trim()
 az bicep build --file infra/h100-spot/main.bicep --stdout
-az deployment group what-if --resource-group rg-AgentzMaint-southcentralus --template-file infra/h100-spot/main.bicep --parameters "adminPublicKey=$publicKey"
+az deployment group validate --name h100-spot --resource-group rg-AgentzMaint-southcentralus --template-file infra/h100-spot/main.bicep --parameters "adminPublicKey=$publicKey" --validation-level Provider
+az deployment group what-if --resource-group rg-AgentzMaint-southcentralus --template-file infra/h100-spot/main.bicep --parameters "adminPublicKey=$publicKey" --validation-level Provider
 az deployment group create --name h100-spot --resource-group rg-AgentzMaint-southcentralus --template-file infra/h100-spot/main.bicep --parameters "adminPublicKey=$publicKey"
 ```
 
@@ -50,16 +51,36 @@ Connect using the existing OpenVPN profile, then:
 ssh -i "$HOME/.ssh/id_ed25519" azureuser@10.0.32.4
 ```
 
-Install the NVIDIA CUDA compute driver using NVIDIA's Ubuntu 24.04 instructions,
-then reboot and verify with `nvidia-smi`. The CUDA driver extension's documented
-OS list does not include Ubuntu 24.04 for CUDA, so this deployment does not
-silently attach that extension. Driver installation and verification are a
-post-deployment step; creating the VM alone does not prove GPU readiness.
+Verified on 2026-11-05 UTC: deployment succeeded, the VM is running as Spot,
+and public-key SSH works through the existing VPN from `172.16.201.2`.
+All five original subnets and the VPN gateway remain intact. After installing
+the NVIDIA driver and rebooting, `nvidia-smi` detected an NVIDIA H100 NVL with
+95,830 MiB of GPU memory and driver `620.70.06`.
+
+Driver installation is a post-deployment step, not part of the Bicep template.
+The CUDA driver extension's documented OS list does not include Ubuntu 24.04
+for CUDA, so this deployment uses NVIDIA's Ubuntu 24.04 repository directly:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y linux-headers-$(uname -r) curl ca-certificates
+curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb -o /tmp/cuda-keyring.deb
+sudo dpkg -i /tmp/cuda-keyring.deb
+sudo apt-get update
+sudo apt-get install -y nvidia-open
+sudo reboot
+```
+
+Reconnect over SSH and run `nvidia-smi`. Repository driver versions can change.
+The CUDA toolkit and ML frameworks have not been installed; the CUDA version
+shown by `nvidia-smi` describes driver capability, not an installed toolkit.
 
 References:
-- https://learn.microsoft.com/azure/virtual-machines/linux/n-series-driver-setup
-- https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
-- https://learn.microsoft.com/azure/quotas/spot-quota
+
+- <https://learn.microsoft.com/azure/virtual-machines/linux/n-series-driver-setup>
+- <https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/ubuntu.html>
+- <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>
+- <https://learn.microsoft.com/azure/quotas/spot-quota>
 
 ## Cleanup
 

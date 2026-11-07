@@ -19,7 +19,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2026-05-01' existing 
   name: virtualNetworkName
 }
 
-resource outboundPublicIp 'Microsoft.Network/publicIPAddresses@2026-07-01' = {
+resource outboundPublicIp 'Microsoft.Network/publicIPAddresses@2026-05-01' = {
   name: '${vmName}-nat-pip'
   location: location
   sku: {
@@ -32,7 +32,7 @@ resource outboundPublicIp 'Microsoft.Network/publicIPAddresses@2026-07-01' = {
   }
 }
 
-resource natGateway 'Microsoft.Network/natGateways@2026-07-01' = {
+resource natGateway 'Microsoft.Network/natGateways@2026-05-01' = {
   name: '${vmName}-nat'
   location: location
   sku: {
@@ -46,7 +46,7 @@ resource natGateway 'Microsoft.Network/natGateways@2026-07-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2026-07-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2026-05-01' = {
   name: '${vmName}-nsg'
   location: location
   properties: {
@@ -92,7 +92,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2026-05-01' = {
   }
 }
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2026-07-01' = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2026-05-01' = {
   name: '${vmName}-nic'
   location: location
   properties: {

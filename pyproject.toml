@@ -30,6 +30,12 @@ dependencies = [
     "jupyterlab>=4.5.9",
     "mcp>=1.21.1,<2",
     "mcp_server_time<=2026.7.10",
+    "transformers>=5.22.2",
+    "datasets>=3.0.0",
+    "accelerate>=1.0.0",
+    "scikit-learn>=1.5.0",
+    "torch>=2.5.0",
+    "matplotlib>=3.9.0",
 ]
 
 [build-system]
